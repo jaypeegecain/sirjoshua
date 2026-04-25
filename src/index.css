@@ -88,6 +88,10 @@
     background-color: var(--primary);
     box-shadow: 0 0 10px var(--primary-glow);
   }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* Hide navigation arrows in number inputs */

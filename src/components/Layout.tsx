@@ -1,13 +1,16 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
+import { MobileHeader } from './MobileHeader';
+import { MobileNav } from './MobileNav';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-[#0A0A0B] text-gray-300 font-sans selection:bg-[#FF6B4A]/30">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#0A0A0B] text-gray-300 font-sans selection:bg-[#FF6B4A]/30">
+      <MobileHeader />
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 p-10 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 p-5 md:p-10 overflow-y-auto custom-scrollbar pb-24 md:pb-10">
           <AnimatePresence mode="wait">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -61,6 +64,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </main>
       </div>
+      <MobileNav />
     </div>
   );
 }

@@ -39,7 +39,7 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-[260px] bg-[#0E0E0F] border-r border-[#1F1F21] flex flex-col h-screen sticky top-0 shrink-0">
+    <aside className="hidden md:flex w-[260px] bg-[#0E0E0F] border-r border-[#1F1F21] flex-col h-screen sticky top-0 shrink-0">
       <div className="p-8 pb-4 flex flex-col items-center border-b border-[#1F1F21] mb-4 relative overflow-hidden group">
         <div className="absolute inset-0 bg-radial-gradient from-[#FF6B4A]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
         <img src="/logo.png" alt="GECAIN" className="w-20 h-20 object-contain mb-4 relative z-10 drop-shadow-[0_0_15px_rgba(255,107,74,0.1)]" />
