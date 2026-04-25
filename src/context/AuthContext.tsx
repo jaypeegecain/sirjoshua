@@ -1,19 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
-
-export type UserRole = 'admin' | 'customer';
-
-interface UserProfile {
-  id: string;
-  email: string;
-  full_name: string | null;
-  role: UserRole;
-  phone_number?: string | null;
-  address?: string | null;
-  city?: string | null;
-  zip_code?: string | null;
-}
+import { ERROR_MESSAGES, TIMING } from '@/src/lib/constants';
+import { UserProfile, UserRole } from '@/src/types';
 
 interface AuthContextType {
   session: Session | null;
@@ -23,10 +12,12 @@ interface AuthContextType {
   isAdmin: boolean;
   isCustomer: boolean;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<void>;
+  error: string | null;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
@@ -43,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle(); // Better than .single() as it won't throw Error on empty
+        .maybeSingle();
       
       if (error) {
         console.error('Profile fetch error:', error);
@@ -62,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(profileData);
     }
   };
+
+  const clearError = () => setError(null);
 
   useEffect(() => {
     let mounted = true;
@@ -84,27 +78,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error('Auth state change error:', err);
+        if (mounted) setError(ERROR_MESSAGES.GENERIC_ERROR);
       } finally {
         if (mounted) {
-          console.log('Finished auth flow, setting loading false');
           setLoading(false);
           clearTimeout(timeoutId);
         }
       }
     };
 
-    // Emergency fallback using functional state update to always get fresh state
+    // Emergency fallback timeout
     timeoutId = setTimeout(() => {
-      if (mounted) {
-        setLoading((prev) => {
-          if (prev) {
-            console.warn('⚡ Auth initialization fallback triggered (5s limit)');
-            return false;
-          }
-          return prev;
-        });
+      if (mounted && loading) {
+        console.warn('⚡ Auth initialization fallback triggered');
+        setLoading(false);
       }
-    }, 5000);
+    }, TIMING.AUTH_INIT_TIMEOUT);
 
     const initAuth = async () => {
       try {
@@ -115,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Auth init error:', err);
         if (mounted) {
           setLoading(false);
+          setError(ERROR_MESSAGES.GENERIC_ERROR);
           clearTimeout(timeoutId);
         }
       }
@@ -131,34 +121,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       clearTimeout(timeoutId);
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const normalizedEmail = email.toLowerCase().trim();
-    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
-    if (error) throw error;
+  const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      clearError();
+      const normalizedEmail = email.toLowerCase().trim();
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email: normalizedEmail, 
+        password 
+      });
+      
+      if (error) {
+        const errorMsg = error.message === 'Invalid login credentials' 
+          ? ERROR_MESSAGES.INVALID_CREDENTIALS 
+          : error.message;
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+      
+      return { success: true };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : ERROR_MESSAGES.GENERIC_ERROR;
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const normalizedEmail = email.toLowerCase().trim();
-    const { error } = await supabase.auth.signUp({ 
-      email: normalizedEmail, 
-      password,
-      options: {
-        data: { full_name: fullName }
+  const signUp = async (email: string, password: string, fullName?: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      clearError();
+      const normalizedEmail = email.toLowerCase().trim();
+      const { error } = await supabase.auth.signUp({ 
+        email: normalizedEmail, 
+        password,
+        options: {
+          data: { full_name: fullName }
+        }
+      });
+      
+      if (error) {
+        setError(error.message);
+        return { success: false, error: error.message };
       }
-    });
-    if (error) throw error;
+      
+      return { success: true };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : ERROR_MESSAGES.GENERIC_ERROR;
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
   };
 
   const signOut = async () => {
     try {
+      clearError();
       setLoading(true);
       await supabase.auth.signOut();
     } catch (err) {
       console.error('Sign out error:', err);
+      setError(ERROR_MESSAGES.GENERIC_ERROR);
     } finally {
       setSession(null);
       setUser(null);
@@ -180,10 +204,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin: role === 'admin',
       isCustomer: role === 'customer',
       loading, 
+      error,
       signIn, 
       signUp, 
       signOut,
-      refreshProfile
+      refreshProfile,
+      clearError
     }}>
       {children}
     </AuthContext.Provider>

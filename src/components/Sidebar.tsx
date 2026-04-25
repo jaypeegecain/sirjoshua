@@ -39,16 +39,16 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="hidden md:flex w-[260px] bg-[#0E0E0F] border-r border-[#1F1F21] flex-col h-screen sticky top-0 shrink-0">
-      <div className="p-8 pb-4 flex flex-col items-center border-b border-[#1F1F21] mb-4 relative overflow-hidden group">
+    <aside className="hidden md:flex lg:w-64 xl:w-80 bg-[#0E0E0F] border-r border-[#1F1F21] flex-col h-screen sticky top-0 shrink-0 overflow-hidden">
+      <div className="p-6 lg:p-8 pb-4 flex flex-col items-center border-b border-[#1F1F21] mb-4 relative overflow-hidden group">
         <div className="absolute inset-0 bg-radial-gradient from-[#FF6B4A]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-        <img src="/logo.png" alt="GECAIN" className="w-20 h-20 object-contain mb-4 relative z-10 drop-shadow-[0_0_15px_rgba(255,107,74,0.1)]" />
-        <h1 className="text-[13px] font-bold tracking-[0.15em] text-white relative z-10">GECAIN</h1>
-        <p className="text-[8px] text-[#888] uppercase tracking-[0.25em] mt-1.5 relative z-10">MOTOR SHOP & ACCESORIES</p>
+        <img src="/logo.png" alt="GECAIN" className="w-16 lg:w-20 h-16 lg:h-20 object-contain mb-4 relative z-10 drop-shadow-[0_0_15px_rgba(255,107,74,0.1)]" />
+        <h1 className="text-[12px] lg:text-[13px] font-bold tracking-[0.15em] text-white relative z-10">GECAIN</h1>
+        <p className="text-[7px] lg:text-[8px] text-[#888] uppercase tracking-[0.25em] mt-1.5 relative z-10">MOTOR SHOP & ACCESORIES</p>
       </div>
 
-      <nav className="flex-1 mt-6 px-4 space-y-1 overflow-y-auto no-scrollbar">
-        <div className="text-[9px] font-bold text-[#444] uppercase tracking-[0.2em] px-4 mb-4">Navigation</div>
+      <nav className="flex-1 mt-6 px-3 lg:px-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#1F1F21] scrollbar-track-transparent">
+        <div className="text-[8px] lg:text-[9px] font-bold text-[#444] uppercase tracking-[0.2em] px-4 mb-4">Navigation</div>
         {navItems.map((item) => {
           const isActive = item.path === '/dashboard' 
             ? pathname === '/dashboard' 
@@ -59,18 +59,18 @@ export function Sidebar() {
               <Link
                 href={item.path}
                 className={cn(
-                  "flex items-center justify-between px-4 py-3.5 rounded transition-all duration-200 text-[11px] font-bold uppercase tracking-[0.15em] group",
+                  "flex items-center justify-between px-4 py-3 lg:py-3.5 rounded transition-all duration-200 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.15em] group min-h-[44px]",
                   isActive 
                     ? "bg-[#222] text-white border-r-2 border-[#FF6B4A]" 
                     : "text-[#666] hover:text-[#aaa] hover:bg-[#151515]"
                 )}
               >
-                <div className="flex items-center gap-4">
-                  <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-[#FF6B4A]" : "text-[#555]")} />
-                  <span>{item.label}</span>
+                <div className="flex items-center gap-3 lg:gap-4">
+                  <item.icon className={cn("w-4 h-4 lg:w-5 lg:h-5 transition-transform group-hover:scale-110", isActive ? "text-[#FF6B4A]" : "text-[#555]")} />
+                  <span className="truncate">{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="bg-[#FF6B4A] text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(255,107,74,0.4)]">
+                  <span className="bg-[#FF6B4A] text-white text-[8px] lg:text-[9px] font-bold px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(255,107,74,0.4)] ml-2">
                     {item.badge}
                   </span>
                 )}
@@ -80,18 +80,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-6 pt-0">
+      <div className="p-4 lg:p-6 pt-0">
         <div className="space-y-1 border-t border-[#2a2a2a] pt-6">
           <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.08, ease: 'easeOut' }}>
             <Link
               href="/dashboard/profile"
               className={cn(
-                "flex items-center gap-4 px-4 py-3.5 rounded-md transition-all duration-200 text-[11px] font-bold uppercase tracking-[0.15em]",
+                "flex items-center gap-3 lg:gap-4 px-4 py-3 lg:py-3.5 rounded-md transition-all duration-200 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.15em] min-h-[44px]",
                 pathname === '/dashboard/profile' ? "bg-[#222] text-white" : "text-[#666] hover:text-[#aaa] hover:bg-[#151515]"
               )}
             >
-              <User className="w-4 h-4 text-[#555]" />
-              Account Profile
+              <User className="w-4 h-4 lg:w-5 lg:h-5 text-[#555]" />
+              <span className="truncate">Account Profile</span>
             </Link>
           </motion.div>
           
@@ -101,14 +101,14 @@ export function Sidebar() {
             transition={{ duration: 0.08, ease: 'easeOut' }}
             onClick={handleSignOut}
             disabled={isLoggingOut}
-            className="w-full flex items-center gap-4 px-4 py-3.5 rounded-md transition-all duration-200 text-[11px] font-bold uppercase tracking-[0.15em] text-[#888] hover:text-[#ccc] hover:bg-[#202020] mt-2 group disabled:opacity-50"
+            className="w-full flex items-center gap-3 lg:gap-4 px-4 py-3 lg:py-3.5 rounded-md transition-all duration-200 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.15em] text-[#888] hover:text-[#ccc] hover:bg-[#202020] mt-2 group disabled:opacity-50 min-h-[44px]"
           >
             {isLoggingOut ? (
-              <Loader2 className="w-4 h-4 animate-spin text-[#FF6B4A]" />
+              <Loader2 className="w-4 h-4 lg:w-5 lg:h-5 animate-spin text-[#FF6B4A]" />
             ) : (
-              <LogOut className="w-4 h-4 text-[#555] group-hover:text-error" />
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5 text-[#555] group-hover:text-error" />
             )}
-            <span className="group-hover:text-error transition-colors">{isLoggingOut ? 'Signing out...' : 'System Logout'}</span>
+            <span className="group-hover:text-error transition-colors truncate">{isLoggingOut ? 'Signing out...' : 'System Logout'}</span>
           </motion.button>
         </div>
       </div>

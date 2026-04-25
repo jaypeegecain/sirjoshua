@@ -7,3 +7,20 @@ coverage/
 *.log
 .env*
 !.env.example
+# Development & scratch files (may contain credentials)
+scratch/
+*.scratch.ts
+*.local.ts
+.development/
+temp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store

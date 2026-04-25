@@ -20,6 +20,7 @@ export default function RootLayout({
         <title>GECAIN MOTOR SHOP & ACCESORIES</title>
         <meta name="description" content="Motor parts management system" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+        <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#FF6B4A" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

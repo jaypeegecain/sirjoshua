@@ -56,37 +56,38 @@ export default function CatalogPage() {
   if (loading) return <LoadingSpinner fullScreen message="Loading parts catalog..." />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Catalog', href: '#', active: true }]} />
       
-      <div className="bg-gradient-to-r from-[#FF6B4A] to-[#FF8A6B] text-white p-8 rounded-lg">
-        <h1 className="text-3xl font-bold mb-2">Parts Catalog</h1>
-        <p className="opacity-90">Browse our extensive collection of automotive parts</p>
+      <div className="bg-gradient-to-r from-[#FF6B4A] to-[#FF8A6B] text-white p-6 sm:p-8 rounded-lg">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Parts Catalog</h1>
+        <p className="text-sm sm:text-base opacity-90">Browse our extensive collection of automotive parts</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+        {/* Filter Sidebar */}
         <div className="md:col-span-1 space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search parts..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700"
+              className="w-full pl-10 pr-4 py-2.5 md:py-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 text-sm md:text-base transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-4">
+          <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-3 md:mb-4">
               <Filter className="h-5 w-5" />
-              <h3 className="font-semibold">Categories</h3>
+              <h3 className="font-semibold text-sm md:text-base">Categories</h3>
             </div>
             <div className="space-y-2">
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedCategory(null)}
-                className={`w-full text-left px-3 py-2 rounded-lg ${!selectedCategory ? 'bg-[#FF6B4A] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                className={`w-full text-left px-3 py-2.5 md:py-3 rounded-lg text-sm md:text-base transition-all min-h-[44px] flex items-center ${!selectedCategory ? 'bg-[#FF6B4A] text-white font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
               >
                 All Categories
               </motion.button>
@@ -95,7 +96,7 @@ export default function CatalogPage() {
                   key={category}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedCategory(category)}
-                  className={`w-full text-left px-3 py-2 rounded-lg ${selectedCategory === category ? 'bg-[#FF6B4A] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  className={`w-full text-left px-3 py-2.5 md:py-3 rounded-lg text-sm md:text-base transition-all min-h-[44px] flex items-center ${selectedCategory === category ? 'bg-[#FF6B4A] text-white font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                 >
                   {category}
                 </motion.button>
@@ -112,7 +113,7 @@ export default function CatalogPage() {
               icon="Package"
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {filteredParts.map(part => (
                 <PartCard key={part.id} part={part} />
               ))}
