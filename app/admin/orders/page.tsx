@@ -98,7 +98,7 @@ export default function AdminOrdersPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filtered.map((order: any) => (
-            <div key={order.id} className="border border-[#2A2A2E] rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between bg-[#1A1A1C] hover:border-[#FF6B4A]/50 transition-colors group relative overflow-hidden">
+            <div key={order.id} className="border border-[#2A2A2E] rounded-xl p-5 flex flex-row items-center justify-between bg-[#1A1A1C] hover:border-[#FF6B4A]/50 transition-colors group relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#FF6B4A] to-[#FF8A6B] opacity-0 group-hover:opacity-100 transition-opacity" />
               <div>
                 <h3 className="font-bold text-white flex items-center gap-2">
@@ -130,7 +130,7 @@ export default function AdminOrdersPage() {
                   Method: {order.payment_method} &bull; Payment: {order.payment_status}
                 </p>
               </div>
-              <div className="text-right mt-4 md:mt-0">
+              <div className="text-right">
                 <p className="text-xl font-bold font-mono text-[#FF6B4A]">
                   ₱{(order.total_amount || 0).toLocaleString()}
                 </p>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { LoadingSpinner } from '@/src/components/LoadingSpinner';
 import { Breadcrumbs } from '@/src/components/Breadcrumbs';
-import { Search, Plus, X, Save, Trash2, User, Shield } from 'lucide-react';
+import { Search, Plus, X, Save, Trash2, User, Shield, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '@/src/lib/supabase';
 
@@ -13,6 +13,7 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ email: '', password: '', full_name: '', role: 'customer' });
 
   useEffect(() => { fetchUsers(); }, []);
@@ -29,28 +30,54 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function handleAddUser(e: React.FormEvent) {
+  function openEdit(user: any) {
+    setEditingId(user.id);
+    setForm({
+      email: user.email || '',
+      password: '', // Password cannot be edited from here
+      full_name: user.full_name || '',
+      role: user.role || 'customer'
+    });
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setForm({ email: '', password: '', full_name: '', role: 'customer' });
+  }
+
+  async function handleSaveUser(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email.toLowerCase().trim(),
-        password: form.password,
-        options: { data: { full_name: form.full_name, role: form.role } }
-      });
-      if (authError) throw authError;
+      if (editingId) {
+        // UPDATE profile only (email/password require different flow)
+        const { error } = await supabase
+          .from('user_profiles')
+          .update({ full_name: form.full_name, role: form.role })
+          .eq('id', editingId);
+        if (error) throw error;
+        
+        setUsers(users.map(u => u.id === editingId ? { ...u, full_name: form.full_name, role: form.role } : u));
+        closeModal();
+      } else {
+        // CREATE new user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: form.email.toLowerCase().trim(),
+          password: form.password,
+          options: { data: { full_name: form.full_name, role: form.role } }
+        });
+        if (authError) throw authError;
 
-      // Update role in user_profiles if admin
-      if (form.role === 'admin' && authData.user) {
-        await supabase.from('user_profiles').update({ role: 'admin' }).eq('id', authData.user.id);
+        // The profile is created automatically by a trigger usually, 
+        // but if not, we wait or fetch.
+        await fetchUsers();
+        closeModal();
+        alert('User created successfully! They will need to confirm their email before logging in.');
       }
-
-      await fetchUsers();
-      setIsModalOpen(false);
-      setForm({ email: '', password: '', full_name: '', role: 'customer' });
-      alert('User created successfully! They will need to confirm their email before logging in.');
     } catch (err: any) {
-      alert('Failed to create user: ' + err.message);
+      alert('Failed to save user: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -129,8 +156,14 @@ export default function AdminUsersPage() {
               </div>
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
+                  onClick={() => openEdit(user)}
+                  className="p-2 rounded text-[#FF6B4A]/50 hover:text-[#FF6B4A] hover:bg-[#FF6B4A]/10 transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => handleDeleteUser(user.id, user.full_name || user.email)}
-                  className="p-2 rounded text-rose-500 hover:bg-rose-500/10 transition-colors"
+                  className="p-2 rounded text-rose-500/50 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -144,18 +177,18 @@ export default function AdminUsersPage() {
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={closeModal} />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-md bg-[#121213] border border-[#2A2A2E] rounded-2xl shadow-2xl overflow-hidden">
               <div className="p-6 border-b border-[#2A2A2E] flex justify-between items-center bg-[#1A1A1C]">
                 <div>
-                  <h2 className="text-xl font-bold text-white">Add New User</h2>
-                  <p className="text-xs text-gray-500 mt-1">Create a new customer or admin account.</p>
+                  <h2 className="text-xl font-bold text-white">{editingId ? 'Edit User' : 'Add New User'}</h2>
+                  <p className="text-xs text-gray-500 mt-1">{editingId ? 'Update user details.' : 'Create a new customer or admin account.'}</p>
                 </div>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 bg-[#2A2A2E] text-gray-400 hover:text-white rounded-lg transition-colors">
+                <button onClick={closeModal} className="p-2 bg-[#2A2A2E] text-gray-400 hover:text-white rounded-lg transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleAddUser} className="p-6 space-y-4">
+              <form onSubmit={handleSaveUser} className="p-6 space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Full Name</label>
                   <input required type="text" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })}
@@ -163,20 +196,23 @@ export default function AdminUsersPage() {
                     placeholder="Juan Dela Cruz"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Email Address</label>
-                  <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-[#2A2A2E] rounded-xl bg-[#0A0A0B] text-white text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
-                    placeholder="user@example.com"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Password</label>
-                  <input required type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} minLength={6}
-                    className="w-full px-4 py-2.5 border border-[#2A2A2E] rounded-xl bg-[#0A0A0B] text-white text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
-                    placeholder="Min. 6 characters"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Email Address</label>
+                    <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                      disabled={!!editingId}
+                      className="w-full px-4 py-2.5 border border-[#2A2A2E] rounded-xl bg-[#0A0A0B] text-white text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors disabled:opacity-50"
+                      placeholder="user@example.com"
+                    />
+                  </div>
+                  {!editingId && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Password</label>
+                      <input required type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} minLength={6}
+                        className="w-full px-4 py-2.5 border border-[#2A2A2E] rounded-xl bg-[#0A0A0B] text-white text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
+                        placeholder="Min. 6 characters"
+                      />
+                    </div>
+                  )}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Role</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -191,11 +227,11 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">
+                  <button type="button" onClick={closeModal} className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">
                     Cancel
                   </button>
                   <motion.button whileTap={{ scale: 0.95 }} type="submit" disabled={saving} className="bg-[#FF6B4A] hover:bg-[#ff8a6b] text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 disabled:opacity-50 transition-colors">
-                    {saving ? 'Creating...' : <><Save className="w-4 h-4" /> Create User</>}
+                    {saving ? 'Saving...' : <><Save className="w-4 h-4" /> {editingId ? 'Update User' : 'Create User'}</>}
                   </motion.button>
                 </div>
               </form>

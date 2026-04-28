@@ -8,11 +8,15 @@ import { Breadcrumbs } from '@/src/components/Breadcrumbs';
 import { Trash2, Plus, Edit, X, Save } from 'lucide-react';
 import { useConfirm } from '@/src/components/ConfirmationDialog';
 import { motion, AnimatePresence } from 'motion/react';
+import { useSearchParams } from 'next/navigation';
+import { Brand } from '@/src/types';
 
 export default function AdminProductsPage() {
   const [parts, setParts] = useState<Part[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const { confirm } = useConfirm();
+  const searchParams = useSearchParams();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -45,15 +49,27 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     fetchParts();
+    fetchBrands();
     
-    // Check URL for pre-fill parameters without triggering Suspense issues
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('action') === 'new') {
-      setNewProduct(prev => ({ ...prev, brand: params.get('brand') || '' }));
+    const action = searchParams.get('action');
+    const brandParam = searchParams.get('brand');
+    
+    if (action === 'new') {
+      setNewProduct(prev => ({ ...prev, brand: brandParam || '' }));
       setIsAddModalOpen(true);
       window.history.replaceState({}, '', '/admin/products');
     }
-  }, []);
+  }, [searchParams]);
+
+  async function fetchBrands() {
+    try {
+      const { data, error } = await supabase.from('brands').select('*').order('name');
+      if (error) throw error;
+      setBrands(data || []);
+    } catch (error) {
+      console.error('Error fetching brands:', error);
+    }
+  }
 
   async function fetchParts() {
     setLoading(true);
@@ -148,7 +164,7 @@ export default function AdminProductsPage() {
 
       <div className="grid grid-cols-1 gap-4">
         {parts.map(part => (
-          <div key={part.id} className="border border-gray-300 dark:border-[#2A2A2E] rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-[#1A1A1C] hover:border-[#FF6B4A]/50 hover:shadow-[0_0_15px_rgba(255,107,74,0.1)] transition-all group">
+          <div key={part.id} className="border border-gray-300 dark:border-[#2A2A2E] rounded-xl p-5 flex flex-row items-center justify-between bg-white dark:bg-[#1A1A1C] hover:border-[#FF6B4A]/50 hover:shadow-[0_0_15px_rgba(255,107,74,0.1)] transition-all group">
             <div className="flex items-center gap-5">
               <img src={part.image_url} alt={part.name} className="w-14 h-14 rounded-lg object-cover border border-[#2A2A2E]" />
               <div>
@@ -160,7 +176,7 @@ export default function AdminProductsPage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-8 mt-4 md:mt-0">
+            <div className="flex items-center gap-8">
               <div className="text-right">
                 <p className="font-bold text-[#FF6B4A]">₱{part.price.toLocaleString()}</p>
                 <div className="flex items-center gap-2 justify-end mt-1">
@@ -228,8 +244,8 @@ export default function AdminProductsPage() {
               </div>
 
               <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-                <form id="add-product-form" onSubmit={handleSaveProduct} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-1.5 md:col-span-2">
+                <form id="add-product-form" onSubmit={handleSaveProduct} className="grid grid-cols-2 gap-5">
+                  <div className="space-y-1.5 col-span-2">
                     <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Product Name</label>
                     <input 
                       required type="text" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})}
@@ -240,11 +256,22 @@ export default function AdminProductsPage() {
 
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Brand</label>
-                    <input 
-                      required type="text" value={newProduct.brand} onChange={e => setNewProduct({...newProduct, brand: e.target.value})}
+                    <select 
+                      required value={newProduct.brand} onChange={e => setNewProduct({...newProduct, brand: e.target.value})}
                       className="w-full px-4 py-2.5 border border-[#2A2A2E] rounded-xl bg-[#0A0A0B] text-white text-sm focus:outline-none focus:border-[#FF6B4A] transition-colors"
-                      placeholder="e.g. Brembo"
-                    />
+                    >
+                      <option value="" disabled>Select a brand</option>
+                      {brands.map(brand => (
+                        <option key={brand.id} value={brand.name}>{brand.name}</option>
+                      ))}
+                      {/* Fallback if brand from product is not in the list (e.g. legacy data) */}
+                      {newProduct.brand && !brands.find(b => b.name === newProduct.brand) && (
+                        <option value={newProduct.brand}>{newProduct.brand}</option>
+                      )}
+                    </select>
+                    {brands.length === 0 && (
+                      <p className="text-[10px] text-rose-500 mt-1 pl-1">No brands found. Manage them in Admin &gt; Brands.</p>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
@@ -292,7 +319,7 @@ export default function AdminProductsPage() {
                     />
                   </div>
 
-                  <div className="space-y-1.5 md:col-span-2">
+                  <div className="space-y-1.5 col-span-2">
                     <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest pl-1">Description</label>
                     <textarea 
                       required rows={3} value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})}

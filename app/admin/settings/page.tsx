@@ -147,7 +147,7 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Grid Layout for Numbers */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="taxRate" className="block text-sm font-semibold mb-2">Tax Rate (%)</label>
             <input

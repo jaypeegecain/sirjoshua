@@ -95,7 +95,7 @@ export function PartCard({ part }: PartCardProps) {
           <div className="flex gap-1.5 sm:gap-2">
             <motion.div whileTap={{ scale: 0.95 }}>
               <Link 
-                href={`/dashboard/catalog/${part.id}`}
+                href={`/dashboard/product/${part.id}`}
                 className="p-2 sm:p-2.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors flex items-center justify-center min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px]"
               >
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
